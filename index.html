@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Desk</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=Caveat:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#efe9dc;
+    --paper-2:#e7e0d1;
+    --ink:#2a2723;
+    --ink-2:#5f5a51;
+    --ink-3:#9a9385;
+    --line:#cfc7b6;
+    --clay:#c9643f;
+    --pencil:#7b8c7a;
+    --serif:"Lora",Georgia,serif;
+    --hand:"Caveat","Bradley Hand",cursive;
+    --mono:"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--paper);color:var(--ink);font-family:var(--serif);
+    overflow:hidden;user-select:none;-webkit-font-smoothing:antialiased;
+  }
+  /* paper grain */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .12 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  /* faint ruled margin line, like a notebook */
+  body::after{
+    content:"";position:fixed;top:0;bottom:0;left:7vw;width:1px;background:var(--clay);opacity:.25;z-index:0;
+  }
+
+  .page{position:relative;z-index:1;height:100%;padding:7vh 8vw 6vh 10vw;display:grid;grid-template-columns:1fr auto;gap:6vw}
+
+  /* ---- left ---- */
+  .meta{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);display:flex;gap:18px}
+  .meta b{color:var(--clay);font-weight:400}
+  .time{font-size:clamp(84px,11vw,168px);line-height:.9;letter-spacing:-.03em;margin-top:2vh;font-weight:400}
+  .time small{font-size:.28em;color:var(--ink-3);letter-spacing:0;margin-left:.15em;vertical-align:baseline}
+  .date{font-size:clamp(24px,2.6vw,38px);font-style:italic;color:var(--ink-2);margin-top:1vh;position:relative;display:inline-block}
+  .date svg{position:absolute;left:0;right:0;bottom:-8px;width:100%;height:10px;color:var(--clay);opacity:.7}
+
+  .weather{margin-top:5vh;display:flex;align-items:flex-end;gap:16px}
+  .weather svg{width:44px;height:44px;stroke:var(--ink);stroke-width:1.4;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .weather .t{font-size:clamp(32px,3.4vw,48px);line-height:1}
+  .weather .d{font-size:14px;color:var(--ink-2);font-style:italic;margin-bottom:6px}
+  .weather .d span{color:var(--ink-3);font-style:normal;font-family:var(--mono);font-size:11px;margin-left:8px}
+
+  .quote{margin-top:5vh;max-width:34vw}
+  .quote p{font-size:clamp(17px,1.4vw,22px);line-height:1.55;text-indent:-.45em;padding-left:.45em}
+  .quote p .q{color:var(--clay)}
+  .quote small{display:block;margin-top:10px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+  .quote small::before{content:"— "}
+
+  .note{margin-top:3vh;max-width:34vw;display:none}
+  .note.show{display:block}
+  .note textarea{
+    width:100%;min-height:70px;resize:none;border:0;border-bottom:1px dashed var(--line);background:transparent;outline:0;
+    font-family:var(--hand);font-size:26px;line-height:1.3;color:var(--ink-2);padding:6px 0;
+  }
+  .note textarea::placeholder{color:var(--ink-3);opacity:.7}
+
+  /* buttons — like little stamped labels */
+  .tools{margin-top:auto;display:flex;gap:10px;flex-wrap:wrap}
+  .btn{
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-2);background:transparent;border:1px solid var(--line);border-radius:3px;
+    padding:8px 14px;cursor:pointer;transition:all .15s;transform:rotate(var(--r,0deg));
+  }
+  .btn:hover{border-color:var(--ink);color:var(--ink);background:var(--paper-2)}
+  .btn.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .btn:nth-child(1){--r:-.6deg}.btn:nth-child(2){--r:.5deg}.btn:nth-child(3){--r:-.3deg}.btn:nth-child(4){--r:.7deg}
+
+  .left{display:flex;flex-direction:column;height:100%}
+
+  /* ---- calendar ---- */
+  .cal{align-self:center;width:min(30vw,440px);transform:rotate(.4deg)}
+  .cal-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;border-bottom:1px solid var(--ink);padding-bottom:10px}
+  .cal-head h2{font-weight:400;font-size:clamp(22px,2vw,30px)}
+  .cal-head h2 em{font-style:italic;color:var(--ink-3);font-size:.7em;margin-left:8px}
+  .nav button{background:none;border:0;font-family:var(--serif);font-size:20px;color:var(--ink-2);cursor:pointer;padding:0 6px}
+  .nav button:hover{color:var(--clay)}
+  .nav .tb{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;vertical-align:middle}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr)}
+  .dow{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--ink-3);text-align:center;padding-bottom:8px}
+  .day{
+    aspect-ratio:1;display:flex;align-items:center;justify-content:center;position:relative;
+    font-size:15px;cursor:pointer;color:var(--ink);border-top:1px solid var(--line);
+  }
+  .day:hover{color:var(--clay)}
+  .day.other{color:var(--ink-3);opacity:.5}
+  .day.sun{color:var(--clay)}
+  .day.now::before{
+    content:"";position:absolute;width:34px;height:34px;border:1.5px solid var(--clay);border-radius:50% 45% 50% 48%;
+    transform:rotate(-6deg);
+  }
+  /* hand-drawn circle around marked days */
+  .day.marked::after{
+    content:"";position:absolute;width:14px;height:3px;background:var(--pencil);bottom:9px;border-radius:2px;transform:rotate(-4deg);opacity:.8
+  }
+  .cal-foot{margin-top:14px;font-family:var(--hand);font-size:20px;color:var(--ink-3);text-align:right}
+
+  @media (max-width:900px){.page{grid-template-columns:1fr}.cal{width:80vw}.quote,.note{max-width:80vw}}
+</style>
+</head>
+<body>
+<main class="page">
+  <section class="left">
+    <div class="meta"><span>Sydney</span><span id="tz">AEST</span><span>day <b id="doy">—</b> of 365</span></div>
+    <div class="time" id="time">—</div>
+    <div class="date">
+      <span id="date">—</span>
+      <svg viewBox="0 0 300 10" preserveAspectRatio="none"><path d="M2 6 C 60 2, 120 9, 180 5 S 260 3, 298 6" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+    </div>
+
+    <div class="weather" id="weather" title="click to refresh">
+      <svg id="wIcon" viewBox="0 0 48 48"></svg>
+      <div>
+        <div class="t" id="wTemp">—</div>
+        <div class="d"><span id="wDesc" style="margin:0;font:inherit;color:inherit">loading</span><span id="wRange"></span></div>
+      </div>
+    </div>
+
+    <div class="quote" id="quote">
+      <p id="qText"></p>
+      <small id="qAuthor"></small>
+    </div>
+
+    <div class="note" id="note">
+      <textarea id="noteText" placeholder="a note to self…" spellcheck="false"></textarea>
+    </div>
+
+    <div class="tools">
+      <button class="btn" id="bQuote">another quote</button>
+      <button class="btn" id="bNote">note</button>
+      <button class="btn" id="bTimer">25 min</button>
+      <button class="btn" id="bCity">city</button>
+    </div>
+  </section>
+
+  <section class="cal">
+    <div class="cal-head">
+      <h2 id="monthLabel"></h2>
+      <div class="nav">
+        <button id="prev">‹</button><button id="todayBtn" class="tb">today</button><button id="next">›</button>
+      </div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="cal-foot" id="calFoot"></div>
+  </section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2,'0');
+const store = (k,v) => { try { v===undefined ? 0 : localStorage.setItem(k, JSON.stringify(v)); return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } };
+
+/* ---- clock ---- */
+function tick(){
+  const d = new Date();
+  const h = d.getHours(), h12 = h%12||12;
+  $('time').innerHTML = `${h12}:${pad(d.getMinutes())}<small>${h<12?'am':'pm'}</small>`;
+  $('date').textContent = d.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'});
+  const start = new Date(d.getFullYear(),0,0);
+  $('doy').textContent = Math.floor((d-start)/86400000);
+  $('tz').textContent = d.toLocaleTimeString('en-AU',{timeZoneName:'short'}).split(' ').pop();
+}
+tick(); setInterval(tick,1000);
+
+/* ---- quotes ---- */
+const quotes = [
+  ["The best way out is always through.","Robert Frost"],
+  ["Little by little, one travels far.","J.R.R. Tolkien"],
+  ["It always seems impossible until it's done.","Nelson Mandela"],
+  ["Well begun is half done.","Aristotle"],
+  ["Rest is not idleness.","John Lubbock"],
+  ["Do what you can, with what you have, where you are.","Theodore Roosevelt"],
+  ["Be curious, not judgmental.","Walt Whitman"],
+  ["The quieter you become, the more you can hear.","Ram Dass"],
+  ["Nothing is worth more than this day.","Goethe"],
+  ["Slow is smooth, and smooth is fast.","Navy proverb"],
+  ["We are what we repeatedly do.","Will Durant"],
+  ["How we spend our days is, of course, how we spend our lives.","Annie Dillard"],
+  ["Attention is the rarest and purest form of generosity.","Simone Weil"],
+  ["You can't wait for inspiration. You have to go after it with a club.","Jack London"],
+  ["Begin anywhere.","John Cage"],
+];
+let qi = Math.floor(Date.now()/86400000) % quotes.length;
+function showQuote(){ $('qText').innerHTML = '<span class="q">“</span>'+quotes[qi][0]+'<span class="q">”</span>'; $('qAuthor').textContent = quotes[qi][1]; }
+showQuote();
+$('bQuote').onclick = () => { qi=(qi+1)%quotes.length; showQuote(); };
+
+/* ---- note ---- */
+$('noteText').value = store('note') || '';
+$('noteText').addEventListener('input', e => store('note', e.target.value));
+$('bNote').onclick = () => {
+  const on = $('note').classList.toggle('show'); $('bNote').classList.toggle('on',on);
+  if(on) $('noteText').focus();
+};
+if($('noteText').value){ $('note').classList.add('show'); $('bNote').classList.add('on'); }
+
+/* ---- timer ---- */
+let tEnd=null, tInt=null;
+function tDraw(){
+  const left = Math.max(0, tEnd-Date.now());
+  const m=Math.floor(left/60000), s=Math.floor(left%60000/1000);
+  $('bTimer').textContent = `${m}:${pad(s)}`;
+  if(left<=0){ clearInterval(tInt); tEnd=null; $('bTimer').textContent='done ✓'; $('bTimer').classList.remove('on'); }
+}
+$('bTimer').onclick = () => {
+  if(tEnd){ clearInterval(tInt); tEnd=null; $('bTimer').textContent='25 min'; $('bTimer').classList.remove('on'); return; }
+  tEnd = Date.now()+25*60000; $('bTimer').classList.add('on'); tDraw(); tInt=setInterval(tDraw,500);
+};
+
+/* ---- calendar ---- */
+let view = new Date(); view.setDate(1);
+let marks = store('marks') || {};
+const key=(y,m,d)=>`${y}-${pad(m+1)}-${pad(d)}`;
+function render(){
+  const y=view.getFullYear(), m=view.getMonth(), today=new Date();
+  $('monthLabel').innerHTML = `${view.toLocaleDateString('en-AU',{month:'long'})}<em>${y}</em>`;
+  const g=$('grid'); g.innerHTML='';
+  ['mo','tu','we','th','fr','sa','su'].forEach(d=>{const e=document.createElement('div');e.className='dow';e.textContent=d;g.appendChild(e);});
+  const first=(new Date(y,m,1).getDay()+6)%7, daysIn=new Date(y,m+1,0).getDate(), daysPrev=new Date(y,m,0).getDate();
+  const cells=[];
+  for(let i=first-1;i>=0;i--) cells.push({d:daysPrev-i,other:true,y:m===0?y-1:y,m:(m+11)%12});
+  for(let d=1;d<=daysIn;d++) cells.push({d,y,m});
+  let n=1; while(cells.length%7) cells.push({d:n++,other:true,y:m===11?y+1:y,m:(m+1)%12});
+  let count=0;
+  cells.forEach((c,i)=>{
+    const e=document.createElement('div'); e.className='day'; e.textContent=c.d;
+    const k=key(c.y,c.m,c.d);
+    if(c.other) e.classList.add('other');
+    if(i%7===6) e.classList.add('sun');
+    if(!c.other&&c.d===today.getDate()&&m===today.getMonth()&&y===today.getFullYear()) e.classList.add('now');
+    if(marks[k]){ e.classList.add('marked'); if(!c.other) count++; }
+    e.onclick=()=>{ marks[k]?delete marks[k]:marks[k]=1; store('marks',marks); render(); };
+    g.appendChild(e);
+  });
+  $('calFoot').textContent = count ? `${count} day${count>1?'s':''} underlined` : 'click a day to underline it';
+}
+$('prev').onclick=()=>{view.setMonth(view.getMonth()-1);render();};
+$('next').onclick=()=>{view.setMonth(view.getMonth()+1);render();};
+$('todayBtn').onclick=()=>{view=new Date();view.setDate(1);render();};
+render();
+setInterval(()=>{const n=new Date();if(n.getHours()===0&&n.getMinutes()===0&&n.getSeconds()<2)render();},1000);
+
+/* ---- weather: line icons ---- */
+const I = {
+  sun:'<circle cx="24" cy="24" r="8"/><path d="M24 7v5M24 36v5M7 24h5M36 24h5M12 12l3.5 3.5M32.5 32.5l3.5 3.5M12 36l3.5-3.5M32.5 15.5l3.5-3.5"/>',
+  partly:'<circle cx="18" cy="18" r="6"/><path d="M18 6v3M6 18h3M9 9l2 2M27 9l-2 2"/><path d="M18 38h16a6 6 0 0 0 0-12 8 8 0 0 0-15-2 5 5 0 0 0-1 14z"/>',
+  cloud:'<path d="M14 36h20a7 7 0 0 0 0-14 9 9 0 0 0-17-2 6 6 0 0 0-3 16z"/>',
+  rain:'<path d="M14 30h20a7 7 0 0 0 0-14 9 9 0 0 0-17-2 6 6 0 0 0-3 16z"/><path d="M18 34l-2 6M26 34l-2 6M34 34l-2 6"/>',
+  storm:'<path d="M14 28h20a7 7 0 0 0 0-14 9 9 0 0 0-17-2 6 6 0 0 0-3 16z"/><path d="M26 28l-5 8h6l-4 8"/>',
+  snow:'<path d="M14 28h20a7 7 0 0 0 0-14 9 9 0 0 0-17-2 6 6 0 0 0-3 16z"/><path d="M18 34v6M15 37h6M30 34v6M27 37h6"/>',
+  fog:'<path d="M10 22h28M8 30h28M12 38h24"/>',
+};
+const codes = c => c===0?['sun','clear']:c<=2?['partly','partly cloudy']:c===3?['cloud','overcast']:c<=48?['fog','fog']:c<=67?['rain','rain']:c<=77?['snow','snow']:c<=82?['rain','showers']:c<=86?['snow','snow showers']:['storm','thunderstorm'];
+let loc = store('loc') || {lat:-33.87,lon:151.21,name:'Sydney'};
+async function geocode(name){
+  const j = await (await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1`)).json();
+  if(!j.results?.length) throw 0; const g=j.results[0]; return {lat:g.latitude,lon:g.longitude,name:g.name};
+}
+async function loadWeather(){
+  try{
+    const j = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&forecast_days=1&timezone=auto`)).json();
+    const [ic,txt] = codes(j.current.weather_code);
+    $('wIcon').innerHTML = I[ic];
+    $('wTemp').textContent = Math.round(j.current.temperature_2m)+'°';
+    $('wDesc').textContent = txt;
+    $('wRange').textContent = `${Math.round(j.daily.temperature_2m_min[0])}° / ${Math.round(j.daily.temperature_2m_max[0])}°`;
+    document.querySelector('.meta span').textContent = loc.name;
+  }catch(e){ $('wIcon').innerHTML=I.fog; $('wTemp').textContent='—'; $('wDesc').textContent='no weather'; }
+}
+loadWeather(); setInterval(loadWeather, 15*60000);
+$('weather').onclick = () => { $('wDesc').textContent='…'; loadWeather(); };
+$('bCity').onclick = async () => {
+  const name = prompt('City:', loc.name); if(!name) return;
+  try { loc = await geocode(name); store('loc',loc); loadWeather(); } catch(e){ $('wDesc').textContent='city not found'; }
+};
+</script>
+</body>
+</html>
